@@ -1,0 +1,18 @@
+PG Conf 2016
+Pub/Sub with Postgresql
+19 Apr 2016
+
+Gian Biondi
+Network Security Software Engineer, DoubleVerify
+gianbiondijr@gmail.com
+@gianbiondi
+
+* Introduction
+# Picture of me
+# Picture of DoubleVerify Logo
+
+* Outline
+
+- What is Pub/Sub
+- How Does Postres Implement it
+- Sample Code
