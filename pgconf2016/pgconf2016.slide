@@ -1,4 +1,4 @@
-PG Conf 2016
+PGConf US 2016
 Pub/Sub with Postgresql
 19 Apr 2016
 
@@ -7,12 +7,31 @@ Network Security Software Engineer, DoubleVerify
 gianbiondijr@gmail.com
 @gianbiondi
 
-* Introduction
-# Picture of me
-# Picture of DoubleVerify Logo
-
 * Outline
 
-- What is Pub/Sub
-- How Does Postres Implement it
-- Sample Code
+- Pub/Sub Description
+- Postgres Implementation
+- Example application
+
+* Pub/Sub
+
+* What Is Pub/Sub?
+- Short for `Publisher-Subscriber`
+- Messaging Pattern - Network-oriented architecture which describes how multiple processes communicate
+- Publishers = Origin of Message
+- Subscribers = Receivers of Messages
+- Publishers and Subscribers decoupled
+
+* Decoupled?
+- Publishers generate a message on a channel
+- Subscribers express interest in one-or-more channels and only receive messages on those channels
+- Publishers do not directly communicate with Subscribers
+# Image about Publishers and subscribers not caring about each other
+
+* Block-Level Diagram
+# Diagram here
+
+* Message Broker?
+
+* Postgres Implements Pub/Sub
+
