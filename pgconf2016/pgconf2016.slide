@@ -16,6 +16,7 @@ gianbiondijr@gmail.com
 * Pub/Sub
 
 * What Is Pub/Sub?
+
 - Short for `Publisher-Subscriber`
 - Messaging Pattern - Network-oriented architecture which describes how multiple processes communicate
 - Publishers = Origin of Message
@@ -23,27 +24,34 @@ gianbiondijr@gmail.com
 - Publishers and Subscribers decoupled
 
 * Decoupled?
+
 - Publishers generate a message on a channel
 - Subscribers express interest in one-or-more channels and only receive messages on those channels
 - Publishers do not directly communicate with Subscribers
 # Image about Publishers and subscribers not caring about each other
 
 * Block-Level Diagram
+
 # Diagram here
 
 * Postgres Implements Pub/Sub!
+
 # Add wow gif or something
 .image ./images/pg.jpg
 
-* Notify
-  NOTIFY channel [, payload]
+* NOTIFY
+
+  NOTIFY channel [, payload];
+
+  pg_notify(text, text);
+
 - Simple, inter-process communication mechanism for a set of processes accessing the same database.
 - Sends event with optional payload string
 - Exectuted on Trigger commit (rolled back transactions don't produce events)
-- If listener is mid-trigger, event is not delivered until that trigger either commits or aborts
 - Order of messages is guaranteed
 
-* Notify
+* NOTIFY Example
+
   LISTEN virtual;
   NOTIFY virtual;
   Asynchronous notification "virtual" received from server process with PID 8448.
@@ -53,3 +61,26 @@ gianbiondijr@gmail.com
   LISTEN foo;
   SELECT pg_notify('fo' || 'o', 'pay' || 'load');
   Asynchronous notification "foo" with payload "payload" received from server process with PID 14728.
+
+* LISTEN
+  
+  LISTEN channel;
+
+- Registers session as listener on channel
+- Sessions register exactly once
+- Postgres notifies session and session notifies client
+- If listener is mid-trigger, event is not delivered until that trigger either commits or aborts
+- Unregister with `UNLISTEN`
+- Registrations are automatically cleaned up when session ends
+
+* LISTEN Example
+
+  LISTEN virtual;
+  NOTIFY virtual;
+  Asynchronous notification "virtual" received from server process with PID 8448.
+
+* Message Queue
+- Built-in message queue for messages not yet processed
+- 8GB default size
+- If a listener enters a transaction, Postgres can't clean out the queue
+- When queue hits 50% capacity, throws log warnings with PID of offending listener
