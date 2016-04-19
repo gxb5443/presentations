@@ -17,17 +17,19 @@ gianbiondijr@gmail.com
 
 * What Is Pub/Sub?
 
-- Short for `Publisher-Subscriber`
+- Short for _Publish-Subscribe_
 - Messaging Pattern - Network-oriented architecture which describes how multiple processes communicate
-- Publishers = Origin of Message
+- Asynchronous Communication
+- Similar to Message Queue
+- Publisher = Origin of Message
 - Subscribers = Receivers of Messages
 - Publishers and Subscribers decoupled
 
 * Decoupled?
 
+- Publishers do not directly communicate with Subscribers
 - Publishers generate a message on a channel
 - Subscribers express interest in one-or-more channels and only receive messages on those channels
-- Publishers do not directly communicate with Subscribers
 # Image about Publishers and subscribers not caring about each other
 
 * Block-Level Diagram
@@ -48,16 +50,16 @@ gianbiondijr@gmail.com
 
 - Simple, inter-process communication mechanism for a set of processes accessing the same database.
 - Sends event with optional payload string
-- Exectuted on Trigger commit (rolled back transactions don't produce events)
+- Exectuted on Trigger commit (rolled-back transactions don't produce events)
 - Order of messages is guaranteed
 
 * NOTIFY Example
 
-  LISTEN virtual;
-  NOTIFY virtual;
-  Asynchronous notification "virtual" received from server process with PID 8448.
-  NOTIFY virtual, 'This is the payload';
-  Asynchronous notification "virtual" with payload "This is the payload" received from server process with PID 8448.
+  LISTEN bar;
+  NOTIFY bar;
+  Asynchronous notification "bar" received from server process with PID 8448.
+  NOTIFY bar, 'This is the payload';
+  Asynchronous notification "bar" with payload "This is the payload" received from server process with PID 8448.
 
   LISTEN foo;
   SELECT pg_notify('fo' || 'o', 'pay' || 'load');
@@ -76,23 +78,29 @@ gianbiondijr@gmail.com
 
 * LISTEN Example
 
-  LISTEN virtual;
-  NOTIFY virtual;
-  Asynchronous notification "virtual" received from server process with PID 8448.
+  LISTEN foo;
+  NOTIFY foo;
+  Asynchronous notification "foo" received from server process with PID 8448.
 
-* Message Queue
+* Caveat: Message Queue
 
-- Built-in message queue for messages not yet processed
+- Built-in message queue for messages sent but not delivered to all subscribers
 - 8GB default size
 - If a listener enters a transaction, Postgres can't clean out the queue
 - When queue hits 50% capacity, throws log warnings with PID of offending listener
+- When queue is full, NOTIFY fails
+
+* Possible Applications
+- New User emailer
+- Cache Managment
 
 * Time for some code
 .image images/code.gif _ 600
 
 * Problem Description
 
-- A distributed web application with DBaaS PostgreSQL Backend
+- Datastore Service
+- A distributed application with single PostgreSQL Backend
 - The application stores data in normalized log format
 - Application runs reports with dynamic field types with performance requirements
 
@@ -101,6 +109,7 @@ gianbiondijr@gmail.com
 * Technology Used
 
 - [[http://golang.org][Golang]] 
+- [[https://godoc.org/github.com/lib/pq][Go pq library]]
 - [[http://www.postgresql.org/][Postgresql]] 
 
 * Field Table
@@ -112,6 +121,15 @@ gianbiondijr@gmail.com
     value_type integer
   );
 
+* Field Table Example
+  
+  id                                   | object_type_id                       | title           | value_type
+  ----------------------------------------------------------------------------------------------------------
+  0a872f8f-0a90-4e47-9242-ed92a881831f | 069c5cf0-905f-4d14-8e98-752818c6bcaa | "first_name"    | 0
+  84dbde06-6fdb-4fe9-b55b-298adb22d6ea | 069c5cf0-905f-4d14-8e98-752818c6bcaa | "last_name"     | 0
+  6c7a0b98-98b3-4487-b72a-908a6865b187 | 069c5cf0-905f-4d14-8e98-752818c6bcaa | "age"           | 1
+  dcfa643e-a8d5-452c-9fab-023f54bb4cda | 1259ae73-5dcd-4b3e-8211-db09cafa34c3 | "fav_ice_cream" | 0
+
 * Log Table Structure
 
   CREATE TABLE IF NOT EXISTS transactions (
@@ -119,6 +137,15 @@ gianbiondijr@gmail.com
     value text,
     created timestamp without time zone default(now() at time zone 'utc')
   );
+
+* Log Table Example
+
+  field_id                             | value          | created
+  ---------------------------------------------------------------
+  0a872f8f-0a90-4e47-9242-ed92a881831f | "Gian"         | '2016-04-19 00:00:00'
+  84dbde06-6fdb-4fe9-b55b-298adb22d6ea | "Biondi"       | '2016-04-19 00:00:00'
+  6c7a0b98-98b3-4487-b72a-908a6865b187 | "27"           | '2016-04-19 00:00:00'
+  dcfa643e-a8d5-452c-9fab-023f54bb4cda | "Vanilla"      | '2016-04-19 00:00:00'
 
 * NOTIFY Trigger
 
@@ -133,6 +160,7 @@ gianbiondijr@gmail.com
       PERFORM pg_notify('new_field', payload);
       RETURN NEW;
   END;
+  $$ LANGUAGE plpgsql;
 
   CREATE TRIGGER field_insert
   AFTER INSERT
@@ -148,6 +176,6 @@ gianbiondijr@gmail.com
 
 .code -numbers updateCache.go /START OMIT/,/END OMIT/
 
-* Possible Issues
+* Possible Issues 
 - Message Queue filling up with long transactions
 - Messages are only delivered between transactions, instead of happening immediately
