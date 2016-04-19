@@ -32,12 +32,13 @@ gianbiondijr@gmail.com
 
 * Block-Level Diagram
 
-# Diagram here
+.image ./images/pubsub.png
 
 * Postgres Implements Pub/Sub!
 
 # Add wow gif or something
 .image ./images/pg.jpg
+.image ./images/wow.gif
 
 * NOTIFY
 
@@ -86,20 +87,21 @@ gianbiondijr@gmail.com
 - If a listener enters a transaction, Postgres can't clean out the queue
 - When queue hits 50% capacity, throws log warnings with PID of offending listener
 
-* Example Application
+* Time for some code
+.image images/code.gif _ 600
 
 * Problem Description
 
 - A distributed web application with DBaaS PostgreSQL Backend
 - The application stores data in normalized log format
+- Application runs reports with dynamic field types with performance requirements
 
-* Log Table Structure
+.image images/serverstructure.png 450 _
 
-  CREATE TABLE IF NOT EXISTS transactions (
-    field_id uuid references fields(id),
-    value text,
-    created timestamp without time zone default(now() at time zone 'utc')
-  );
+* Technology Used
+
+- [[http://golang.org][Golang]] 
+- [[http://www.postgresql.org/][Postgresql]] 
 
 * Field Table
 
@@ -108,6 +110,14 @@ gianbiondijr@gmail.com
     object_type_id uuid references object_types(id),
     title text not null,
     value_type integer
+  );
+
+* Log Table Structure
+
+  CREATE TABLE IF NOT EXISTS transactions (
+    field_id uuid references fields(id),
+    value text,
+    created timestamp without time zone default(now() at time zone 'utc')
   );
 
 * NOTIFY Trigger
@@ -130,10 +140,14 @@ gianbiondijr@gmail.com
   FOR EACH ROW
     EXECUTE PROCEDURE field_notify();
 
-* Go Code
+* Go Driver Code
 
 .code -numbers driver.go /START OMIT/,/END OMIT/
 
-* Go Code
+* Go Cache Code
 
 .code -numbers updateCache.go /START OMIT/,/END OMIT/
+
+* Possible Issues
+- Message Queue filling up with long transactions
+- Messages are only delivered between transactions, instead of happening immediately
