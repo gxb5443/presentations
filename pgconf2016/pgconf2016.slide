@@ -80,7 +80,60 @@ gianbiondijr@gmail.com
   Asynchronous notification "virtual" received from server process with PID 8448.
 
 * Message Queue
+
 - Built-in message queue for messages not yet processed
 - 8GB default size
 - If a listener enters a transaction, Postgres can't clean out the queue
 - When queue hits 50% capacity, throws log warnings with PID of offending listener
+
+* Example Application
+
+* Problem Description
+
+- A distributed web application with DBaaS PostgreSQL Backend
+- The application stores data in normalized log format
+
+* Log Table Structure
+
+  CREATE TABLE IF NOT EXISTS transactions (
+    field_id uuid references fields(id),
+    value text,
+    created timestamp without time zone default(now() at time zone 'utc')
+  );
+
+* Field Table
+
+  CREATE TABLE IF NOT EXISTS fields (
+    id uuid PRIMARY KEY not null default uuid_generate_v4(),
+    object_type_id uuid references object_types(id),
+    title text not null,
+    value_type integer
+  );
+
+* NOTIFY Trigger
+
+  CREATE OR REPLACE FUNCTION field_notify() RETURNS trigger AS $$
+  DECLARE
+    payload varchar;
+  BEGIN
+      payload = CAST(NEW.id AS text) || 
+        ', ' || CAST(NEW.object_type_id AS text) || 
+        ', ' || NEW.title ||
+        ', ' || CAST(NEW.value_type AS text);
+      PERFORM pg_notify('new_field', payload);
+      RETURN NEW;
+  END;
+
+  CREATE TRIGGER field_insert
+  AFTER INSERT
+  ON fields
+  FOR EACH ROW
+    EXECUTE PROCEDURE field_notify();
+
+* Go Code
+
+.code -numbers driver.go /START OMIT/,/END OMIT/
+
+* Go Code
+
+.code -numbers updateCache.go /START OMIT/,/END OMIT/
