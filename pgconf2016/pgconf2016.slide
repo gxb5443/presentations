@@ -13,7 +13,7 @@ gianbiondijr@gmail.com
 - Postgres Implementation
 - Example application
 
-* Pub/Sub
+* Pub/Sub Description
 
 * What Is Pub/Sub?
 
@@ -21,6 +21,7 @@ gianbiondijr@gmail.com
 - Messaging Pattern - Network-oriented architecture which describes how multiple processes communicate
 - Asynchronous Communication
 - Similar to Message Queue
+- Faciliated by some middleware or service like RabbitMQ
 - Publisher = Origin of Message
 - Subscribers = Receivers of Messages
 - Publishers and Subscribers decoupled
@@ -30,16 +31,15 @@ gianbiondijr@gmail.com
 - Publishers do not directly communicate with Subscribers
 - Publishers generate a message on a channel
 - Subscribers express interest in one-or-more channels and only receive messages on those channels
-# Image about Publishers and subscribers not caring about each other
 
 * Block-Level Diagram
 
 .image ./images/pubsub.png
 
-* Postgres Implements Pub/Sub!
+* Postgres Implements Pub/Sub
 
-# Add wow gif or something
-.image ./images/pg.jpg
+Right out-of-the-box!
+#.image ./images/pg.jpg
 .image ./images/wow.gif
 
 * NOTIFY
@@ -49,8 +49,10 @@ gianbiondijr@gmail.com
   pg_notify(text, text);
 
 - Simple, inter-process communication mechanism for a set of processes accessing the same database.
-- Sends event with optional payload string
+- Name of channel typically name of table, but can be anything
+- Sends event with channel name, publisher server PID, and payload string
 - Exectuted on Trigger commit (rolled-back transactions don't produce events)
+- Multiple NOTIFY in single transaction can be rolled into one (identical payloads)
 - Order of messages is guaranteed
 
 * NOTIFY Example
@@ -72,9 +74,10 @@ gianbiondijr@gmail.com
 - Registers session as listener on channel
 - Sessions register exactly once
 - Postgres notifies session and session notifies client
-- If listener is mid-trigger, event is not delivered until that trigger either commits or aborts
+- If listener is mid-transaction, event is not delivered until that transaction either commits or aborts
 - Unregister with `UNLISTEN`
 - Registrations are automatically cleaned up when session ends
+- Session can LISTEN and NOTIFY on the same channel
 
 * LISTEN Example
 
@@ -94,7 +97,9 @@ gianbiondijr@gmail.com
 - New User emailer
 - Cache Managment
 
-* Time for some code
+* Sample Application
+Time for some code!
+
 .image images/code.gif _ 600
 
 * Problem Description
@@ -179,3 +184,7 @@ gianbiondijr@gmail.com
 * Possible Issues 
 - Message Queue filling up with long transactions
 - Messages are only delivered between transactions, instead of happening immediately
+
+* Summary
+- Postgres implements simple publish-subscribe functionality out-of-the-box
+- Watch out for long transactions
