@@ -1,0 +1,19 @@
+version: '3.3'
+services:
+    nginx:
+        image: library/nginx
+        restart: always
+        ports: 
+            - "8080:80"
+        volumes:
+            - "lua_config:/var/nginx"
+    consul-template:
+        build: ./src/consul/TEMPLATES
+        command: -consul "consul:8500" -wait=5s
+        volumes:
+            - "./src/consul/TEMPLATES:/consul-template/data"
+            - "lua_config:/tmp"
+        depends_on:
+            - consul
+volumes:
+    lua_config:

@@ -1,0 +1,97 @@
+Intro to Docker
+Phaser Deep Dive
+24 May 2018
+Tags: phaser, deep-dive, docker
+
+Gian Biondi
+Senior Software Engineer, Jet.com
+gianfranco.biondi@jet.com
+
+* What are Containers?
+
+Containers are a method of virtualization at the Operating System level which
+allows an application and all it's dependencies to run in resource-restricted, 
+isolated processes.
+
+* How do containers work?
+
+Containers are built on top of several features built into the linux kernal:
+
+- namespaces
+- cgroups
+
+* namespaces
+
+- Partitions kernel resources and isolates processes
+- limits what each process can 'see'
+- Each process is in one namespace of each type
+- namespace types include pid, net, mnt, uts, ipc, user
+
+* cgroups
+- "Control Groups"
+- limits/accounts/isolates specific resource usage
+- eg. CPU, Memory, Disk I/O, Network
+
+* Containers vs. Virtual Machines
+
+.image ./images/VM@2x.png 500 _
+.caption "VM model"
+
+* Containers vs. Virtual Machines
+
+.image ./images/Container@2x.png 500 _
+.caption "Container model"
+
+* What is Docker?
+
+Docker is a user-friendly platform for performing OS-Level virtualization, written in Go!
+.image images/docker_and_go.jpeg 500 _
+
+* Docker on Mac/Windows
+
+- Docker runs natively on Linux
+- On macOS, Docker isn't directly supported. Instead, it uses Hyperkit to spin up a lightweight linux VM as the Host OS
+- Docker *is* supported natively by windows server. However, Windows desktop uses Hyper-V to spin up Windows Server Nano as the Host OS
+
+* Docker Components
+
+.image images/engine-components-flow.png 500 _
+
+* Docker Images
+- Read-only template with instructions for building docker images
+- Used to store and ship applications
+- Can be built on top of other images
+- Defined by _Dockerfile_
+- Composed of 'layers'
+
+* Hello Dockerfile
+
+.code code/Dockerfile.hello
+: docker build -t hello-docker -f Dockerfile.hello .
+: docker run --rm hello-docker
+
+* Simple Dockerfile
+
+.code code/Dockerfile.simple
+
+* Docker Containers
+
+- runnable instance of an image with read-write layer on top
+- isolated from other containers and from host machine
+
+* Docker Registry
+
+- Repository for storing pre-built docker images in gzipped tarballs
+- Docker Clients connect to registries to download images to use or upload images they have built
+- Can be public or private
+
+* Docker-Compose
+
+Compose is a tool for defining and running multi-container Docker applications.
+
+.code code/docker-compose.yml
+
+* Orchestration
+
+- kubernetes
+- nomad

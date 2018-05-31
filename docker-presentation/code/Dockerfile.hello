@@ -1,0 +1,5 @@
+FROM alpine:3.7
+
+LABEL maintainer="Gian Biondi <gianfranco.biondi@jet.com>"
+
+CMD ["/bin/echo", "hello, world!"]

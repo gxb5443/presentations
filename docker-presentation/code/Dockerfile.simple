@@ -1,0 +1,21 @@
+FROM alpine:3.7
+
+LABEL maintainer="Gian Biondi <gianfranco.biondi@jet.com>"
+
+RUN apk --update add \
+    bash \
+    ctags \
+    curl \
+    git \
+    python \
+    && apk add --virtual build-deps \
+    build-base \
+    python-dev \
+
+RUN apk del build-deps
+
+COPY app.py /usr/local/app/app.py
+COPY requirements.txt /usr/local/app/app.py
+COPY entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ['sh', '/entrypoint.sh']
