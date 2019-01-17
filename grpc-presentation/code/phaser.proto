@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package jet.service.phaser.v2;
+
+// START OMIT
+import 'google/protobuf/empty.proto';
+
+service Core {
+    rpc Assign (AssignmentRequest) returns (PhaserResponse){}
+    rpc FlushCache(google.protobuf.Empty) returns (google.protobuf.Empty){}
+}
+
+message AssignmentRequest {
+    // Field OMIT
+    string host = 1;
+    string path = 2;
+    string x_forwarded_for = 3;
+    // END Field OMIT
+    string user_agent = 4;
+    string referer = 5;
+    string dr_orpheus_header = 6;
+    string jet_api_client = 7;
+    map<string,string> supplemental_headers = 8;
+}
+
+message PhaserResponse {
+    string build_header = 1;
+    string dr_orpheus_header = 2;
+}
+
+// END OMIT

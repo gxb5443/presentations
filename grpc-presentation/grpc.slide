@@ -1,0 +1,186 @@
+Intro to gRPC
+Phaser Deep Dive
+17 Jan 2019
+Tags: phaser, deep-dive, grpc, protobuf
+
+Gian Biondi
+Senior Software Engineer, Jet.com
+gianfranco.biondi@jet.com
+
+* What is gRPC?
+
+gRPC is an open source, high performance RPC framework from Google. It is cross 
+platform and language agnostic. It is primarily used for connecting polyglot services.
+.image images/landing-2-1.svg
+
+* What is an RPC?
+
+    In distributed computing, a remote procedure call (RPC) is when a computer 
+    program causes a procedure (subroutine) to execute in a different address space 
+    (commonly on another computer on a shared network), which is coded as if it 
+    were a normal (local) procedure call, without the programmer explicitly coding 
+    the details for the remote interaction
+    - Wikipedia
+
+* What is Protobuf?
+
+- gRPC uses Protocol Buffers as the message format.
+- Protocol buffers are a flexible, efficient, automated mechanism for serializing structured data.
+- Protobufs are language neutral, platform neutral, and extensible.
+- comes from Google
+- open source
+
+* Why use Protobuf?
+
+1. Backwards compatibility
+
+- New fields will be discarded by services with older version of `.proto` file
+
+2. Fixed Schema
+
+- Typed schema provides validation on serialization/deserialization
+
+3. Space efficient (3-10x smaller)
+
+- Binary-Encoding, varint encoding, and no field names or overhead characters
+
+4. Faster (20-100x faster)
+
+- Binary-Encoding is more efficiently processed than recursively parsing string-encoded message and reflecting on type (if applicable)
+
+* How to use Protobuf?
+
+- specify the structure of the data in a `.proto` file
+- Each protobuf message is a very small (less than 1MB) logical record, consisting of a series of key-value pairs
+- You distribute the `.proto` file to all the services communicating with that message
+- compile it for the language of each service
+
+* A Protobuf Message
+
+.code code/phone.proto
+
+* How does Protobuf work?
+
+1. Protobuf compiler generate _SerDes_ code for a target language
+2. When it serializes a protobuf message in code, it converts each field to its _wire_type_ and concatenates them together into a single byte stream, ready to send
+3. The deserializer reads the byte stream sequentially, looking for a set of start bytes starting each field identifying the field, the _wire_type_, and followed by the data
+4. The stream is deserialized into a protobuf-compiler-generated object (for the target language)
+
+* Protobuf Encoding
+
+* Length Delimited Encoding
+
+Strings are encoded as a series of bytes prefixed by a length. This goes for 
+repeated fields, and embedded messages as well.
+
+For Example:
+
+    12 07 | 74 65 73 74 69 6e 67
+    0x12 → Field Number = 2, type = 2
+    0x07 → Seven Bytes following
+    Message spells out "testing"
+
+* Base 128 VarInt encoding
+
+: It's base 128 because it uses 7 bits for data
+: Little Endian Base 128 Encoding
+
+VarInt incoding is a way to serialize integers using one or more bytes.
+
+For Example: 300
+
+    Encoded in VarInt
+    1010 1100 0000 0010
+    # (44034)
+
+    # Uses only lower 7 bits (base 128);
+    # MSB is reserved to indicate continuation.
+    1010 1100 0000 0010
+    → 010 1100  000 0010
+
+    # All Lower 7 Bits Concatenated (Little Endian)
+    000 0010  010 1100
+    # Concat the bytes
+    →  000 0010 ++ 010 1100
+    →  100101100
+    →  256 + 32 + 8 + 4 = 300
+
+* Fixed Encoding
+
+: Signed integers force 10 bytes because of 2's Complement. A lot of leading zeros become 1's. And 8 bytes for a int64, with an additional byte to make up for the missing leading bits, and one more for the extra byte.
+
+- Certain types (float, fixedInt32, etc) always consume a fixed number of bytes
+- Using negative `int*` will cause numbers to drop out of VarInt encoding and always consume ten bytes (Use `sint32` instead)
+
+* Protobuf Types
+
+Protobuf supports a bunch of scalar types:
+
+    Type	Meaning             Used For
+    0	    Varint              int32, int64, uint32, uint64, sint32, sint64, bool, enum
+    1	    64-bit              fixed64, sfixed64, double
+    2	    Length-delimited    string, bytes, embedded messages, packed repeated fields
+    3	    Start group         groups (deprecated)
+    4	    End group           groups (deprecated)
+    5	    32-bit              fixed32, sfixed32, float
+
+    Decoding: (field_number << 3) | wire_type
+
+* Field Ordering
+
+.code code/phaser.proto /Field OMIT/,/END Field OMIT/
+
+- Specify order by using unique numeric tags for each field starting with 1, up to 536,870,911 (excluding 19000-19999 reserved for protobuf)
+- Should keep the number of tags at 15 to use only one byte
+- You can use field numbers in any order
+- When serialized, the message will be in the correct order
+- The sequential nature of the byte stream allows the decoder to work fast
+- The decoder can also act on fields in any order.
+
+
+* From Protobuf to gRPC Service
+
+* Sample gRPC Proto
+
+.code code/phaser.proto /START OMIT/,/END OMIT/
+
+* Sample gRPC Client Implementation
+
+.code code/client.go /START OMIT/,/END OMIT/
+
+* Sample gRPC Server Implementation
+
+.code code/server.go /START OMIT/,/END OMIT/
+
+* gRPC Methods
+
+gRPC gives us four kinds of methods:
+
+1. Unary RPC
+2. Server-Streaming RPC
+3. Client-Streaming RPC
+4. BiDirectional-Streaming RPC
+
+* HTTP/2
+
+: HPACK caches headers in a table + huffman encoding to compress
+
+gRPC transmits data over HTTP/2 Protocol:
+- Update to HTTP/1.1 Protocol
+- Spec Released May 2015
+
+*Features*
+
+- Single TCP connection for multiple streams
+- Server Push
+- Supports *Binary* *Protocols*
+- Multiplexed Streams
+- Stream prioritization
+- HPACK Stateful Header Compression
+
+* gRPC Feature Summary
+
+- Idiomatic client libraries in 10 languages
+- Highly efficient on wire and with a simple service definition framework
+- Bi-directional streaming with http/2 based transport
+- Pluggable auth, tracing, load balancing and health checking
